@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-If you discover a security issue in **Pika Experiments** — credential exposure, an unsafe default in any experiment folder, a way to escape the localhost sandbox, anything that could harm someone running this code — please email **security@pika.art** (fallback: **support@pika.art**) rather than opening a public issue or PR.
+If you discover a security issue in **Pika Experiments** — credential exposure, an unsafe default in any experiment folder, a way to escape the localhost sandbox, anything that could harm someone running this code — please email **support@pika.art** with subject line starting `[security]` rather than opening a public issue or PR.
 
 We aim to:
 

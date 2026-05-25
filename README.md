@@ -51,7 +51,7 @@ Agent-authored PRs: read [`AGENTS.md`](./AGENTS.md) first — it has the pre-pus
 
 ## Security
 
-Found a vulnerability? Email **security@pika.art** (fallback: **support@pika.art**). Don't open a public issue. Full scope in [`SECURITY.md`](./SECURITY.md).
+Found a vulnerability? Email **support@pika.art**. Don't open a public issue. Full scope in [`SECURITY.md`](./SECURITY.md).
 
 ## License
 

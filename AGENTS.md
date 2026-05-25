@@ -21,7 +21,7 @@ Anything that lands on `main` is world-readable. Before any commit:
    - No `.env`, no `.pika-token.json`, no `.google-token.json` — the root `.gitignore` covers these but double-check.
    - No real bearer tokens or session IDs in test data or fixtures.
 2. **No PII.**
-   - No personal email addresses other than the public `security@pika.art` / `support@pika.art` contact aliases.
+   - No personal email addresses other than the public `support@pika.art` contact alias.
    - No real personal names, GitHub handles, or internal usernames anywhere in code, comments, or docs.
    - Avatar/persona placeholders should be neutral (`A`, `Agent`, etc.), not initials of real people.
 3. **No internal URLs.**
