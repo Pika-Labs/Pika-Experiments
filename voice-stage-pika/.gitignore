@@ -1,0 +1,17 @@
+# Local environment & secrets — NEVER commit
+.env
+.env.local
+
+# Per-install token caches
+.pika-token.json
+.google-token.json
+
+# Local identity / personalization the upstream prototype writes
+IDENTITY.md
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

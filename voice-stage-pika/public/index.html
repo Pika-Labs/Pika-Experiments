@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Stage</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="app-loading">
+    <div class="work-glow" aria-hidden="true"></div>
+    <div class="startup-loader" id="startupLoader">Loading your experience...</div>
+    <div class="scrim" id="scrim" hidden></div>
+    <main class="app-shell">
+      <section class="stage-wrap" aria-label="Presentation stage">
+        <section class="stage" id="stage">
+          <div class="empty-stage">
+            <p class="speech-line" id="speechLine"></p>
+          </div>
+        </section>
+      </section>
+
+      <aside class="side-panel" aria-label="Session tracker">
+        <details class="app-menu" id="appMenu">
+          <summary aria-label="Open menu"><span aria-hidden="true">...</span></summary>
+          <div class="menu-sheet">
+            <a class="connect-pika" id="connectPika" href="/api/pika/oauth/start">Connect Pika</a>
+            <a class="connect-pika" id="connectGoogle" href="/api/google/oauth/start">Connect Google</a>
+            <button class="menu-toggle" id="muteToggle" type="button" aria-pressed="false">Mute Agent</button>
+            <details class="activity-card" open>
+              <summary>
+                <span>Logs</span>
+                <button class="ghost" id="clearAudit" type="button">Clear</button>
+              </summary>
+              <ol class="audit-list" id="auditList"></ol>
+            </details>
+            <p class="model-line" id="modelLine" hidden>Loading config...</p>
+          </div>
+        </details>
+
+        <section class="voice-card">
+          <div class="profile-block">
+            <div class="profile-avatar" id="profileAvatar">R</div>
+            <div class="profile-copy">
+              <h2 id="identityName">Agent</h2>
+            </div>
+          </div>
+          <button class="mic-button" id="micButton" type="button" aria-label="Toggle voice"></button>
+          <button id="connectButton" type="button" hidden>Start</button>
+          <button id="stopButton" type="button" hidden disabled>Stop</button>
+        </section>
+        <div class="connection-pill" id="statusPill">
+          <span></span>
+          <strong>Opening</strong>
+        </div>
+
+        <section class="transcript-card" id="notesPanel" aria-label="Conversation notes" aria-hidden="true">
+          <div class="notes-toolbar">
+            <span></span>
+            <h2> </h2>
+            <button class="activity-toggle" id="toggleTranscriptActivity" type="button" aria-pressed="false">Show Logs</button>
+            <button class="close-notes" id="closeNotes" type="button" aria-label="Close chat">×</button>
+          </div>
+          <div class="transcript" id="transcript"></div>
+          <form class="chat-composer" id="chatComposer">
+            <label class="attach-button" for="referenceUpload" aria-label="Add reference">+</label>
+            <input id="referenceUpload" type="file" accept="image/*,.txt,.md,.json,.csv,.pdf" multiple hidden />
+            <textarea id="chatInput" rows="1" placeholder="Type to Agent..."></textarea>
+            <button id="sendText" type="submit">Send</button>
+          </form>
+          <div class="attachment-tray" id="attachmentTray" hidden></div>
+        </section>
+      </aside>
+    </main>
+    <audio id="remoteAudio" autoplay></audio>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
