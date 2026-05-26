@@ -12,6 +12,10 @@
   <a href="https://github.com/Pika-Labs/Pika-Skills"><img src="https://img.shields.io/badge/sibling-Pika--Skills-orange" alt="Pika-Skills"></a>
 </p>
 
+<p align="center">
+  <img src="./.github/assets/pika-experiments-teaser.png" alt="A metallic Pika logo wrapped in 'work in progress' caution tape on a dark developer desk surrounded by code-themed snack wrappers, a notebook with pseudocode, a laptop, and a coffee mug" width="100%"/>
+</p>
+
 > 🧪 These projects are intentionally rough around the edges. APIs evolve, demos break, folders may come and go. The polished, production-ready experience lives in [`Pika-Plugins`](https://github.com/Pika-Labs/Pika-Plugins) and [`Pika-Skills`](https://github.com/Pika-Labs/Pika-Skills). This is the sketchpad.
 
 ## What's in here
