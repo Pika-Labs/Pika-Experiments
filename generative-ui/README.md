@@ -12,6 +12,10 @@
   <a href="../README.md"><img src="https://img.shields.io/badge/part_of-Pika--Experiments-violet" alt="Pika-Experiments"></a>
 </p>
 
+<p align="center">
+  <img src="../.github/assets/generative-ui-hero.png" alt="Generative UI in use — three cat-wheel product images composed side-by-side on the canvas labeled 'Walnut', 'Matte White', and 'Soft Felt Interior', with a transcribed user line 'I think I like that third option the best,' the agent's reply 'Here it is, all three side by side.' and a Listening indicator" width="100%"/>
+</p>
+
 > 🧪 Part of [`Pika-Experiments`](../README.md). Local-only prototype. ~3,700 lines of plain JS, **zero dependencies**, no build step. Read the source →
 
 ---

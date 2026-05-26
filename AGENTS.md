@@ -128,7 +128,7 @@ If any of those fail, **do not push**.
 
 Pick one, mark `in-progress (codex|claude)` next to it before starting, and remove when done.
 
-- [ ] **Real demo still as hero image.** Monica is preparing a still from the latest Generative UI demo cut. When it arrives, drop it at `.github/assets/generative-ui-hero.jpg` (or similar) and re-add an `<img>` tag near the top of both `README.md` (root) and `generative-ui/README.md`. **Note:** GitHub doesn't auto-play video in README, so keep it to a still until that changes.
+- [x] **Real demo still as hero image.** (Done 2026-05-26.) Root README uses the "WORK IN PROGRESS" lab teaser at `.github/assets/pika-experiments-teaser.png`; `generative-ui/README.md` uses a real product still at `.github/assets/generative-ui-hero.png` (three cat-wheel options on the canvas with transcribed dialogue). Swap either when fresher art lands.
 - [ ] **Avatar placeholder.** `generative-ui/public/index.html` hardcodes `R` as the avatar initial. Change to a neutral fallback (e.g. `A` for "Agent") or pull dynamically from the connected Pika identity.
 - [ ] **`CONTRIBUTING.md`.** Right now the contributing notes live inline in the root README. If the section grows, extract it.
 - [ ] **GitHub Actions pre-push workflow.** Wire the pre-push checklist above into `.github/workflows/checklist.yml` so PRs auto-fail on a regression.
