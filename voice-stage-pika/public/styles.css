@@ -89,6 +89,7 @@ body {
 }
 
 .app-loading .stage,
+.app-loading .stage-history-controls,
 .app-loading .app-menu,
 .app-loading .voice-card,
 .app-loading .connection-pill,
@@ -101,6 +102,7 @@ body {
 }
 
 .app-ready .app-menu,
+.app-ready .stage-history-controls,
 .app-ready .voice-card,
 .app-ready .connection-pill {
   animation: revealSoft 620ms var(--ease-spring) both;
@@ -166,11 +168,48 @@ button:disabled {
   overflow-y: auto;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
+  isolation: isolate;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   animation: appReveal 520ms var(--ease-spring) both;
+}
+
+.stage-history-controls {
+  position: fixed;
+  top: 42px;
+  left: 46px;
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stage-history-controls button {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  min-height: 54px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(252, 250, 247, 0.76);
+  color: var(--ink);
+  font-size: 1.48rem;
+  font-weight: 820;
+  line-height: 1;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.stage-history-controls button:disabled {
+  opacity: 0.28;
+  transform: translateZ(0);
+}
+
+.stage-history-controls button:not(:disabled):active {
+  transform: scale(0.94) translateZ(0);
 }
 
 .connection-pill {
@@ -320,6 +359,7 @@ button:disabled {
 
 .stage-content {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,6 +368,8 @@ button:disabled {
   padding: 34px 72px 210px;
   overflow: visible;
   transform: translateZ(0);
+  transform-origin: 50% 50%;
+  will-change: opacity, transform;
 }
 
 .stage-content > * {
@@ -459,24 +501,66 @@ button:disabled {
 
 .stage-enter {
   opacity: 0;
-  transform: translateY(18px) scale(0.985) translateZ(0);
+  transform: translate3d(0, 30px, 0) scale(0.965);
 }
 
 .stage-enter-active {
+  z-index: 2;
   opacity: 1;
-  transform: translateY(0) scale(1) translateZ(0);
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity 420ms ease,
+    transform 760ms var(--ease-spring);
+}
+
+.stage-exit {
+  position: absolute;
+  top: var(--stage-exit-top, 0);
+  left: 0;
+  right: 0;
+  z-index: 1;
+  min-height: max(100%, var(--stage-exit-height, 100vh));
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(0.94);
+  transition:
+    opacity 340ms ease,
+    transform 620ms var(--ease-spring);
+  pointer-events: none;
+}
+
+.stage-content-pending.stage-exit {
+  transform: translate3d(0, 18px, 0) scale(0.88);
+}
+
+.stage-enter-back {
+  transform: translate3d(-42px, 0, 0) scale(0.985);
+}
+
+.stage-enter-forward {
+  transform: translate3d(42px, 0, 0) scale(0.985);
+}
+
+.stage-exit-back {
+  transform: translate3d(42px, 0, 0) scale(0.965);
+}
+
+.stage-exit-forward {
+  transform: translate3d(-42px, 0, 0) scale(0.965);
+}
+
+.stage-exit :is(.image-card, .scene-item, .data-item, .media-stack > *) {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0) scale(0.9);
   transition:
     opacity 260ms ease,
     transform 520ms var(--ease-spring);
 }
 
-.stage-exit {
-  opacity: 0;
-  transform: translateY(-10px) scale(0.992) translateZ(0);
-  transition:
-    opacity 180ms ease,
-    transform 240ms var(--ease-snap);
-  pointer-events: none;
+.stage-media-ghost {
+  display: block;
+  background: #FFFFFF;
+  overflow: hidden;
+  will-change: transform, opacity;
 }
 
 .stage-title {
@@ -591,6 +675,12 @@ button:disabled {
 .stage-enter-active .scene-item {
   animation: sceneObjectIn 620ms var(--ease-spring) both;
   animation-delay: calc(50ms + var(--scene-index, 0) * 58ms);
+}
+
+.stage-enter-active .scene-item:nth-child(n + 13) {
+  opacity: 1;
+  transform: var(--scene-final-transform) translateZ(0);
+  animation: none;
 }
 
 .scene-card-inner {
@@ -1610,6 +1700,11 @@ button:disabled {
   animation-delay: 180ms;
 }
 
+.stage-enter-active .image-card:nth-child(n + 13) {
+  transform: var(--final-transform, translate3d(0, 0, 0) scale(1));
+  animation: none;
+}
+
 .image-card img,
 .image-card video,
 .media-slot > .pending-visual {
@@ -1675,7 +1770,7 @@ button:disabled {
   filter: blur(58px) saturate(1.22);
   transform: translateZ(0);
   transform-origin: 50% 50%;
-  animation: auraTurn 2s linear infinite;
+  animation: auraTurn 4s linear infinite;
   will-change: transform;
 }
 
@@ -1686,24 +1781,34 @@ button:disabled {
   border-radius: 50%;
   opacity: 0.78;
   transform: translateZ(0);
+  transform-origin: 50% 50%;
+  animation: auraBlobPulse var(--aura-blob-duration, 3.2s) ease-in-out infinite;
+  animation-delay: var(--aura-blob-delay, 0ms);
+  will-change: transform, opacity;
 }
 
 .pending-aura span:nth-child(1) {
   left: 6%;
   top: 30%;
   background: #CFC3FF;
+  --aura-blob-duration: 3.1s;
+  --aura-blob-delay: -240ms;
 }
 
 .pending-aura span:nth-child(2) {
   left: 29%;
   top: 2%;
   background: #B9F299;
+  --aura-blob-duration: 3.7s;
+  --aura-blob-delay: -980ms;
 }
 
 .pending-aura span:nth-child(3) {
   right: 2%;
   top: 30%;
   background: #F7C8F6;
+  --aura-blob-duration: 3.35s;
+  --aura-blob-delay: -620ms;
 }
 
 .pending-aura span:nth-child(4) {
@@ -1714,6 +1819,8 @@ button:disabled {
   right: 15%;
   bottom: 4%;
   background: #FFF49A;
+  --aura-blob-duration: 4s;
+  --aura-blob-delay: -1320ms;
 }
 
 figcaption {
@@ -2786,6 +2893,22 @@ h2 {
   }
 }
 
+@keyframes auraBlobPulse {
+  0%,
+  100% {
+    opacity: 0.68;
+    transform: scale(0.94) translateZ(0);
+  }
+  42% {
+    opacity: 0.84;
+    transform: scale(1.07) translateZ(0);
+  }
+  68% {
+    opacity: 0.76;
+    transform: scale(0.99) translateZ(0);
+  }
+}
+
 @keyframes auraFloat {
   0%,
   100% {
@@ -2866,6 +2989,19 @@ h2 {
   .stage {
     min-height: 100vh;
     border-radius: 0;
+  }
+
+  .stage-history-controls {
+    top: 22px;
+    left: 22px;
+    gap: 8px;
+  }
+
+  .stage-history-controls button {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    font-size: 1.2rem;
   }
 
   .stage-content {

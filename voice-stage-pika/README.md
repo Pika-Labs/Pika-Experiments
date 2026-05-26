@@ -25,7 +25,7 @@
 You hold the mic and talk. The agent talks back — and **shows you what it's thinking** on a live canvas.
 
 - 🎙️ **OpenAI Realtime** runs the voice loop (low-latency WebRTC, speech in & out).
-- 🎨 **The Stage** is a generative presentation canvas — moodboards, slides, dashboards, recap cards — emitted by the model as you converse.
+- 🎨 **The Stage** is a generative presentation canvas — moodboards, slides, dashboards, recap cards — emitted by the model as you converse. Stage history is navigable (← / → in the top-left) and media animates between layouts.
 - 🧰 **Pika MCP** gives the agent ~60 atomic creative tools: generate images and videos, search music, lipsync, capture websites, edit audio, build brand kits.
 - 📅 **Optional Google Workspace** — read calendar, draft emails, create Docs/Sheets/Slides if you connect a Google OAuth client.
 

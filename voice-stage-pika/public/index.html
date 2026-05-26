@@ -10,6 +10,10 @@
     <div class="work-glow" aria-hidden="true"></div>
     <div class="startup-loader" id="startupLoader">Loading your experience...</div>
     <div class="scrim" id="scrim" hidden></div>
+    <nav class="stage-history-controls" id="stageHistoryControls" aria-label="Stage history">
+      <button id="stageBack" type="button" aria-label="Previous Stage" disabled>←</button>
+      <button id="stageForward" type="button" aria-label="Next Stage" disabled>→</button>
+    </nav>
     <main class="app-shell">
       <section class="stage-wrap" aria-label="Presentation stage">
         <section class="stage" id="stage">
@@ -26,10 +30,9 @@
             <a class="connect-pika" id="connectPika" href="/api/pika/oauth/start">Connect Pika</a>
             <a class="connect-pika" id="connectGoogle" href="/api/google/oauth/start">Connect Google</a>
             <button class="menu-toggle" id="muteToggle" type="button" aria-pressed="false">Mute Agent</button>
-            <details class="activity-card" open>
+            <details class="activity-card">
               <summary>
                 <span>Logs</span>
-                <button class="ghost" id="clearAudit" type="button">Clear</button>
               </summary>
               <ol class="audit-list" id="auditList"></ol>
             </details>
@@ -57,7 +60,6 @@
           <div class="notes-toolbar">
             <span></span>
             <h2> </h2>
-            <button class="activity-toggle" id="toggleTranscriptActivity" type="button" aria-pressed="false">Show Logs</button>
             <button class="close-notes" id="closeNotes" type="button" aria-label="Close chat">×</button>
           </div>
           <div class="transcript" id="transcript"></div>

@@ -44,10 +44,13 @@ const STAGE_LAYOUT_PROMPT = [
   "The user is usually on a desktop browser with a large horizontal viewport. The layout should read quickly from a distance: large objects, clear hierarchy, minimal text, generous whitespace, and strong visual grouping.",
   "The host app already provides the background. Do not set a full-page or full-layout background color. Let the Stage remain transparent unless styling an individual object.",
   "Layouts should feel art-directed, as if a graphic designer composed them for this specific answer using the house style. Favor presentation-slide, editorial, bento-inspired, moodboard, dashboard, or desktop-object compositions over generic webpage layouts.",
+  "Before composing the layout, analyze the content and choose a clear theme for the presentation. The theme may describe the subject, format, or intended use: recipe card, analytics dashboard, brand guidelines, weather forecast, calendar wall, product moodboard, storyboard, launch plan, inbox triage, comparison board, capability map, or something more specific to the request. Let that theme drive the structure, scale, typography, spacing, and visual rhythm of the custom HTML layout.",
+  "The theme is internal art direction. Do not print it as a visible label, title, or eyebrow unless it genuinely improves the design.",
   "Use a white rounded surface only when an individual item needs visual separation.",
   "Do not wrap the entire layout in a surface. Do not nest one surface inside another. Avoid borders, outlines, dividers, and report-like header stacks.",
   "Optimize for fast visual comprehension: short text, strong hierarchy, clear grouping, generous spacing, and obvious relationships between items. The composition should fill the available Stage generously.",
   "Make objects and typography large enough to feel intentional and readable from a distance, but keep hierarchy elegant.",
+  "For major visual objects, add data-stage-item when natural. If an object represents a persistent media URL or repeated entity, add a stable data-stage-key. The host app handles motion; do not add your own full-screen loading states.",
   [
     "Typography starting points:",
     "H1: 64-96px, 800-900 weight, line-height around 0.95-1.05.",
@@ -559,7 +562,7 @@ function stageRenderHtmlTool() {
   return {
     type: "function",
     name: "stage_render_html",
-    description: "Render the final custom presentation view on the Stage using AI-authored safe HTML, CSS, and optional JavaScript. This is the preferred layout tool for most visual answers: media, forecasts, calendars, availability, inboxes, schedules, timelines, dashboards, metrics, rankings, comparisons, roadmaps, budgets, product boards, storyboards, code snippets, documents, and anything with dates, times, quantities, status, icons, categories, links, or media. Follow the Stage layout prompt from your instructions: design a composed presentation canvas, not a webpage. Always include bespoke CSS for composition, sizing, overlap, hierarchy, and content-specific details. Stage primitives are optional helpers, not a substitute for layout CSS.",
+    description: "Render the final custom presentation view on the Stage using AI-authored safe HTML, CSS, and optional JavaScript. This is the preferred layout tool for most visual answers: media, forecasts, calendars, availability, inboxes, schedules, timelines, dashboards, metrics, rankings, comparisons, roadmaps, budgets, product boards, storyboards, code snippets, documents, and anything with dates, times, quantities, status, icons, categories, links, or media. Follow the Stage layout prompt from your instructions: analyze the content, choose an internal theme, and design a composed presentation canvas, not a webpage. Always include bespoke CSS for composition, sizing, overlap, hierarchy, and content-specific details. Stage primitives are optional helpers, not a substitute for layout CSS.",
     parameters: {
       type: "object",
       properties: {

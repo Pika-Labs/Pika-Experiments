@@ -21,7 +21,10 @@ const els = {
   chatInput: document.querySelector("#chatInput"),
   referenceUpload: document.querySelector("#referenceUpload"),
   attachmentTray: document.querySelector("#attachmentTray"),
-  appMenu: document.querySelector("#appMenu")
+  appMenu: document.querySelector("#appMenu"),
+  stageHistoryControls: document.querySelector("#stageHistoryControls"),
+  stageBack: document.querySelector("#stageBack"),
+  stageForward: document.querySelector("#stageForward")
 };
 els.startupLoader = document.querySelector("#startupLoader");
 els.connectPika = document.querySelector("#connectPika");
@@ -49,10 +52,19 @@ let assistantMuted = false;
 let pendingAttachments = [];
 let queuedMedia = emptyQueuedMedia();
 let mediaFlushTimer = null;
-let pendingSpeechLineText = "";
 let pendingSpeechLineFinal = "";
 let speechLineTimer = null;
-let lastSpeechLineUpdateAt = 0;
+let speechRevealTargetWords = [];
+let speechRevealShownWords = [];
+let speechRevealIsFinal = false;
+const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+const stageHistory = [];
+const MAX_STAGE_HISTORY = 50;
+let stageHistoryIndex = -1;
+const SPEECH_FIRST_WORD_DELAY_MS = 90;
+const SPEECH_WORD_INTERVAL_MS = 285;
+const SPEECH_SOFT_PAUSE_MS = 360;
+const SPEECH_FULL_PAUSE_MS = 470;
 
 init();
 
@@ -61,21 +73,24 @@ async function init() {
   els.micButton.addEventListener("click", () => (connected ? stopSession() : startSession()));
   els.stopButton.addEventListener("click", stopSession);
   els.closeNotes.addEventListener("click", closeNotes);
-  els.toggleTranscriptActivity.addEventListener("click", toggleTranscriptActivity);
+  els.toggleTranscriptActivity?.addEventListener("click", toggleTranscriptActivity);
   els.scrim.addEventListener("click", closeNotes);
   els.speechLine.addEventListener("click", openNotes);
   els.muteToggle.addEventListener("click", toggleAssistantMute);
   els.chatComposer.addEventListener("submit", sendTypedMessage);
   els.chatInput.addEventListener("input", resizeComposer);
   els.referenceUpload.addEventListener("change", handleReferenceFiles);
+  els.stageBack?.addEventListener("click", () => restoreStageHistory(-1));
+  els.stageForward?.addEventListener("click", () => restoreStageHistory(1));
   window.addEventListener("focus", refreshIdentityFromConfig);
   document.addEventListener("click", handleDocumentClick);
   document.addEventListener("keydown", handleGlobalKeydown);
-  els.clearAudit.addEventListener("click", (event) => {
+  els.clearAudit?.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
     els.auditList.innerHTML = "";
   });
+  updateStageHistoryControls();
 
   try {
     const config = await fetchJson("/api/config");
@@ -237,7 +252,7 @@ function onRealtimeMessage(event) {
     currentAssistantTextId = id;
     responseText.set(id, (responseText.get(id) || "") + assistantDelta);
     updateAssistantMessage(id, responseText.get(id));
-    queueSpeechLineUpdate(responseText.get(id));
+    queueSpeechLineUpdate(responseText.get(id), { final: false });
     window.clearTimeout(greetingFallbackTimer);
   }
 
@@ -248,7 +263,7 @@ function onRealtimeMessage(event) {
     responseText.set(id, assistantDone);
     updateAssistantMessage(id, assistantDone);
     pendingSpeechLineFinal = assistantDone;
-    queueSpeechLineUpdate(assistantDone);
+    queueSpeechLineUpdate(assistantDone, { final: true });
     window.clearTimeout(greetingFallbackTimer);
   }
 
@@ -258,6 +273,7 @@ function onRealtimeMessage(event) {
   }
 
   if (message.type === "response.created") {
+    resetSpeechLineReveal();
     currentAssistantTextId = message.response?.id || null;
     if (!activeWorkCount && !waitingForAiLayout) setAmbient("Thinking", "thinking");
   }
@@ -419,7 +435,7 @@ function renderPendingStage(name, args = {}) {
     <div class="stage-content stage-content-pending">
       ${pendingAuraMarkup()}
     </div>
-  `, { mode: "replace" });
+  `, { mode: "replace", skipHistory: true });
 }
 
 function pendingAuraMarkup() {
@@ -637,7 +653,6 @@ function requestGreeting() {
   window.clearTimeout(greetingFallbackTimer);
   greetingFallbackTimer = window.setTimeout(() => {
     if (!els.speechLine?.textContent?.trim()) {
-      flushSpeechLineUpdate("I’m here with you.");
       setAmbient("Listening", "listening");
     }
   }, 2400);
@@ -721,7 +736,11 @@ function renderImages(args) {
           .join("")}
       </div>
     </div>
-  `, { mode: "replace" });
+  `, {
+    mode: "replace",
+    kind: "media",
+    assets: resolved.map((image) => image.url).filter(Boolean)
+  });
 
   setAmbient("Ready", "ready", 1200);
   return { displayed: resolved.length };
@@ -758,6 +777,43 @@ function renderStageHtml(args) {
   const stageRuntime = `
     <script>
       (() => {
+        const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const markMotionItems = () => {
+          if (prefersReducedMotion) {
+            document.documentElement.classList.add("stage-ready");
+            return;
+          }
+          const stage = document.querySelector(".stage-canvas");
+          if (!stage) return;
+          const selectors = [
+            "[data-stage-item]",
+            "[data-stage-object]",
+            "figure",
+            "article",
+            "li",
+            ".vs-surface",
+            ".vs-media-object",
+            ".vs-frame",
+            ".vs-hero-card",
+            ".vs-weather-tile",
+            ".vs-calendar-day",
+            ".vs-event",
+            ".vs-email",
+            ".vs-time-block",
+            ".vs-visual",
+            ".stage-card",
+            ".media-card"
+          ];
+          let items = Array.from(stage.querySelectorAll(selectors.join(",")));
+          items = items.filter((item, index, all) => !all.some((other) => other !== item && other.contains(item)));
+          if (!items.length) items = Array.from(stage.children);
+          items.slice(0, 12).forEach((item, index) => {
+            item.classList.add("stage-motion-item");
+            item.style.setProperty("--stage-i", String(index));
+            item.style.setProperty("--stage-delay", (50 + Math.min(index, 11) * 54) + "ms");
+          });
+          requestAnimationFrame(() => document.documentElement.classList.add("stage-ready"));
+        };
         const playVideos = () => {
           document.querySelectorAll("video").forEach((video) => {
             video.autoplay = true;
@@ -770,6 +826,11 @@ function renderStageHtml(args) {
             video.play().catch(() => {});
           });
         };
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", markMotionItems, { once: true });
+        } else {
+          markMotionItems();
+        }
         window.addEventListener("load", playVideos);
         document.addEventListener("DOMContentLoaded", playVideos);
         setTimeout(playVideos, 80);
@@ -1102,6 +1163,37 @@ function renderStageHtml(args) {
             text-align: center;
           }
           .stage-canvas > .stage-card:not(:has(img)):not(:has(video)) { background: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
+          .stage-motion-item {
+            opacity: 0;
+            transform: translate3d(0, 20px, 0) scale(.94);
+            transform-origin: 50% 50%;
+            will-change: opacity, transform;
+          }
+          html.stage-ready .stage-motion-item {
+            animation: stageItemLand 780ms cubic-bezier(.18, .94, .19, 1.02) both;
+            animation-delay: var(--stage-delay, 50ms);
+          }
+          @keyframes stageItemLand {
+            0% {
+              opacity: 0;
+              transform: translate3d(0, 24px, 0) scale(.92);
+            }
+            64% {
+              opacity: 1;
+              transform: translate3d(0, -4px, 0) scale(1.018);
+            }
+            100% {
+              opacity: 1;
+              transform: translate3d(0, 0, 0) scale(1);
+            }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .stage-motion-item {
+              opacity: 1;
+              transform: translate3d(0, 0, 0) scale(1);
+              animation: none !important;
+            }
+          }
           p { color: var(--muted); font-size: clamp(16px, 1.3vw, 22px); }
           .stage-title { font-size: clamp(34px, 5vw, 76px); line-height: 1; letter-spacing: 0; margin: 0; }
           .stage-caption { color: var(--muted); font-size: clamp(18px, 2vw, 28px); }
@@ -1109,6 +1201,22 @@ function renderStageHtml(args) {
           .floating { box-shadow: var(--shadow); border-radius: 34px; }
           .stage-row.floating, .stage-canvas.floating { box-shadow: none; background: transparent; border-radius: 0; }
           ${safeCss}
+          .stage-motion-item {
+            opacity: 0;
+            transform: translate3d(0, 20px, 0) scale(.94);
+            will-change: opacity, transform;
+          }
+          html.stage-ready .stage-motion-item {
+            animation: stageItemLand 780ms cubic-bezier(.18, .94, .19, 1.02) both;
+            animation-delay: var(--stage-delay, 50ms);
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .stage-motion-item {
+              opacity: 1;
+              transform: translate3d(0, 0, 0) scale(1);
+              animation: none !important;
+            }
+          }
         </style>
       </head>
       <body><main class="stage-canvas${scrollableStage ? " stage-scroll" : ""}">${playableHtml}</main>${stageRuntime}</body>
@@ -1118,7 +1226,16 @@ function renderStageHtml(args) {
     <div class="stage-content stage-content-html">
       <iframe class="stage-frame" sandbox="allow-scripts" srcdoc="${escapeAttr(doc)}" title="${escapeAttr(args.title || "Stage display")}"></iframe>
     </div>
-  `, { mode: "replace" });
+  `, {
+    mode: "replace",
+    kind: "html",
+    assets: [
+      ...inlineAssets.images.map((asset) => asset.url),
+      ...inlineAssets.videos.map((asset) => asset.url),
+      ...inlineAssets.audio.map((asset) => asset.url),
+      ...inlineAssets.links.map((asset) => asset.url)
+    ].filter(Boolean)
+  });
   setAmbient("Ready", "ready", 1200);
   return { displayed: true };
 }
@@ -1165,7 +1282,7 @@ function ensureAuraStage() {
     <div class="stage-content stage-content-pending">
       ${pendingAuraMarkup()}
     </div>
-  `, { mode: "replace" });
+  `, { mode: "replace", skipHistory: true });
 }
 
 function clearPendingStage() {
@@ -1173,7 +1290,7 @@ function clearPendingStage() {
   const pending = els.stage.querySelector(".stage-content-pending");
   if (!pending) return;
   pending.classList.add("stage-exit");
-  window.setTimeout(() => pending.remove(), 260);
+  window.setTimeout(() => pending.remove(), 620);
   const stable = els.stage.querySelector(".stage-content:not(.stage-content-pending):not(.stage-exit)");
   if (!stable) els.stage.classList.remove("has-stage-content");
 }
@@ -1421,13 +1538,18 @@ function renderMedia({ title, videos = [], audio = [], result }) {
       </div>
       <pre class="result-pre">${escapeHtml(JSON.stringify(result, null, 2))}</pre>
     </div>
-  `, { mode: "replace" });
+  `, {
+    mode: "replace",
+    kind: "media",
+    assets: [...videos, ...audio].filter(Boolean)
+  });
   setAmbient("Ready", "ready", 1200);
 }
 
 function transitionStage(html, options = {}) {
   els.stage.classList.remove("stage-working");
-  const previous = els.stage.querySelector(".stage-content");
+  const previous = els.stage.querySelector(".stage-content:not(.stage-exit)");
+  const previousMedia = collectStageMediaRects(previous);
   const shell = document.createElement("div");
   shell.innerHTML = html.trim();
   const next = shell.firstElementChild;
@@ -1435,28 +1557,201 @@ function transitionStage(html, options = {}) {
 
   stageRenderCount += 1;
   next.dataset.stageRender = String(stageRenderCount);
+  if (options.kind) next.dataset.stageKind = options.kind;
+  if (Array.isArray(options.assets) && options.assets.length) {
+    next.dataset.stageAssets = JSON.stringify(options.assets.slice(0, 20));
+  }
+  const direction = stageHistoryDirection(options.direction);
   next.classList.add("stage-enter");
+  if (direction) next.classList.add(`stage-enter-${direction}`);
 
-  if (previous && options.mode === "replace") {
-    previous.remove();
+  if (prefersReducedMotion || options.mode === "instant") {
+    previous?.remove();
+    els.stage.querySelector(".empty-stage")?.remove();
   } else if (previous) {
+    previous.style.setProperty("--stage-exit-top", `${els.stage.scrollTop}px`);
+    previous.style.setProperty("--stage-exit-height", `${els.stage.clientHeight}px`);
     previous.classList.add("stage-exit");
-    window.setTimeout(() => previous.remove(), 260);
+    if (direction) previous.classList.add(`stage-exit-${direction}`);
+    window.setTimeout(() => previous.remove(), 720);
   } else {
-    els.stage.querySelector(".empty-stage")?.classList.add("stage-exit");
-    window.setTimeout(() => els.stage.querySelector(".empty-stage")?.remove(), 260);
+    const empty = els.stage.querySelector(".empty-stage");
+    empty?.classList.add("stage-exit");
+    if (direction) empty?.classList.add(`stage-exit-${direction}`);
+    window.setTimeout(() => empty?.remove(), 520);
   }
 
   els.stage.appendChild(next);
   [...els.stage.querySelectorAll(".stage-content")]
-    .filter((node) => node !== next && !node.classList.contains("stage-exit"))
+    .filter((node) => node !== next && node !== previous)
     .forEach((node) => node.remove());
-  els.stage.classList.add("has-stage-content");
+
+  els.stage.classList.add("has-stage-content", "stage-transitioning");
+  if (els.stage.scrollTop > 4) {
+    els.stage.scrollTo({ top: 0, behavior: "auto" });
+  }
   ensureSpeechLine();
-  requestAnimationFrame(() => {
+  if (shouldRecordStageHistory(next, options)) recordStageHistory(html, options);
+
+  const enterDelay = previous && !prefersReducedMotion ? 90 : 0;
+  window.setTimeout(() => requestAnimationFrame(() => {
     next.classList.add("stage-enter-active");
+    animateSharedStageMedia(previousMedia, next);
     autoplayStageVideos(next);
+    window.setTimeout(() => els.stage.classList.remove("stage-transitioning"), 780);
+  }), enterDelay);
+}
+
+function stageHistoryDirection(direction) {
+  return direction === "back" || direction === "forward" ? direction : "";
+}
+
+function shouldRecordStageHistory(next, options = {}) {
+  if (options.skipHistory || options.fromHistory) return false;
+  if (next.classList.contains("stage-content-pending")) return false;
+  return next.classList.contains("stage-content");
+}
+
+function recordStageHistory(html, options = {}) {
+  const snapshot = {
+    html: html.trim(),
+    kind: options.kind || "",
+    assets: Array.isArray(options.assets) ? options.assets.slice(0, 20) : [],
+    createdAt: Date.now()
+  };
+  if (!snapshot.html) return;
+
+  const current = stageHistory[stageHistoryIndex];
+  if (stageHistoryIndex < stageHistory.length - 1) {
+    stageHistory.splice(stageHistoryIndex + 1);
+  }
+  if (current?.html === snapshot.html) {
+    updateStageHistoryControls();
+    return;
+  }
+
+  stageHistory.push(snapshot);
+  if (stageHistory.length > MAX_STAGE_HISTORY) {
+    stageHistory.shift();
+  }
+  stageHistoryIndex = stageHistory.length - 1;
+  updateStageHistoryControls();
+}
+
+function restoreStageHistory(delta) {
+  const nextIndex = stageHistoryIndex + delta;
+  if (nextIndex < 0 || nextIndex >= stageHistory.length) return;
+  const snapshot = stageHistory[nextIndex];
+  stageHistoryIndex = nextIndex;
+  updateStageHistoryControls();
+  transitionStage(snapshot.html, {
+    mode: "replace",
+    kind: snapshot.kind,
+    assets: snapshot.assets,
+    fromHistory: true,
+    direction: delta < 0 ? "back" : "forward"
   });
+}
+
+function updateStageHistoryControls() {
+  if (!els.stageBack || !els.stageForward) return;
+  const canGoBack = stageHistoryIndex > 0;
+  const canGoForward = stageHistoryIndex >= 0 && stageHistoryIndex < stageHistory.length - 1;
+  els.stageBack.disabled = !canGoBack;
+  els.stageForward.disabled = !canGoForward;
+  els.stageBack.setAttribute("aria-label", canGoBack ? `Previous Stage (${stageHistoryIndex} of ${stageHistory.length})` : "Previous Stage");
+  els.stageForward.setAttribute("aria-label", canGoForward ? `Next Stage (${stageHistoryIndex + 2} of ${stageHistory.length})` : "Next Stage");
+  els.stageHistoryControls?.classList.toggle("has-history", stageHistory.length > 1);
+}
+
+function collectStageMediaRects(root) {
+  const rects = new Map();
+  if (!root) return rects;
+  root.querySelectorAll("img, video").forEach((node) => {
+    const key = mediaNodeKey(node);
+    if (!key || rects.has(key)) return;
+    const rect = node.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const style = window.getComputedStyle(node);
+    rects.set(key, {
+      tagName: node.tagName.toLowerCase(),
+      src: key,
+      rect,
+      borderRadius: style.borderRadius,
+      boxShadow: style.boxShadow,
+      objectFit: style.objectFit || "cover"
+    });
+  });
+  return rects;
+}
+
+function animateSharedStageMedia(previousMedia, next) {
+  if (prefersReducedMotion || !previousMedia.size) return;
+  const matches = [];
+  next.querySelectorAll("img, video").forEach((node) => {
+    const key = mediaNodeKey(node);
+    if (!key || !previousMedia.has(key)) return;
+    matches.push({ node, from: previousMedia.get(key) });
+  });
+  if (!matches.length) return;
+
+  requestAnimationFrame(() => {
+    matches.slice(0, 8).forEach(({ node, from }) => {
+      const to = node.getBoundingClientRect();
+      if (!to.width || !to.height) return;
+      const clone = node.cloneNode(false);
+      clone.removeAttribute("controls");
+      clone.removeAttribute("autoplay");
+      if (clone.tagName?.toLowerCase() === "video") {
+        clone.muted = true;
+        clone.pause?.();
+      }
+      clone.setAttribute("aria-hidden", "true");
+      clone.classList.add("stage-media-ghost");
+      Object.assign(clone.style, {
+        position: "fixed",
+        left: `${from.rect.left}px`,
+        top: `${from.rect.top}px`,
+        width: `${from.rect.width}px`,
+        height: `${from.rect.height}px`,
+        borderRadius: from.borderRadius,
+        boxShadow: from.boxShadow,
+        objectFit: from.objectFit,
+        pointerEvents: "none",
+        zIndex: "23",
+        transformOrigin: "0 0"
+      });
+      document.body.appendChild(clone);
+
+      const priorVisibility = node.style.visibility;
+      node.style.visibility = "hidden";
+      const dx = to.left - from.rect.left;
+      const dy = to.top - from.rect.top;
+      const sx = to.width / from.rect.width;
+      const sy = to.height / from.rect.height;
+      const animation = clone.animate(
+        [
+          { transform: "translate3d(0, 0, 0) scale(1, 1)", opacity: 1 },
+          { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${sx}, ${sy})`, opacity: 1 }
+        ],
+        {
+          duration: 720,
+          easing: "cubic-bezier(.18, .94, .19, 1.02)",
+          fill: "both"
+        }
+      );
+      animation.onfinish = () => {
+        node.style.visibility = priorVisibility;
+        clone.remove();
+      };
+      animation.oncancel = animation.onfinish;
+    });
+  });
+}
+
+function mediaNodeKey(node) {
+  if (!node) return "";
+  return node.currentSrc || node.src || node.getAttribute("src") || "";
 }
 
 function enhanceStageMediaHtml(html) {
@@ -1514,7 +1809,7 @@ function ensureSpeechLine() {
   const line = document.createElement("p");
   line.className = "speech-line";
   line.id = "speechLine";
-  line.textContent = "Here it is.";
+  line.textContent = "";
   line.addEventListener("click", openNotes);
   els.stage.appendChild(line);
   els.speechLine = line;
@@ -1530,28 +1825,74 @@ function updateSpeechLine(text) {
   els.speechLine.classList.remove("speech-refresh");
   void els.speechLine.offsetWidth;
   els.speechLine.classList.add("speech-refresh");
-  lastSpeechLineUpdateAt = Date.now();
 }
 
-function queueSpeechLineUpdate(text) {
-  pendingSpeechLineText = String(text || "");
-  if (speechLineTimer) return;
-  const elapsed = Date.now() - lastSpeechLineUpdateAt;
-  const delay = Math.max(0, 920 - elapsed);
-  speechLineTimer = window.setTimeout(() => {
-    speechLineTimer = null;
-    if (!pendingSpeechLineText) return;
-    const nextText = pendingSpeechLineText;
-    pendingSpeechLineText = "";
-    updateSpeechLine(nextText);
-  }, delay);
+function queueSpeechLineUpdate(text, options = {}) {
+  ensureSpeechLine();
+  const words = speechWordsFromText(text, options.final || speechRevealIsFinal);
+  if (!words.length) return;
+  speechRevealIsFinal = speechRevealIsFinal || Boolean(options.final);
+
+  if (!isWordPrefix(speechRevealShownWords, words)) {
+    speechRevealShownWords = [];
+  }
+  speechRevealTargetWords = words;
+  scheduleNextSpeechWord();
 }
 
 function flushSpeechLineUpdate(text) {
   window.clearTimeout(speechLineTimer);
   speechLineTimer = null;
-  pendingSpeechLineText = "";
-  updateSpeechLine(text);
+  queueSpeechLineUpdate(text, { final: true });
+}
+
+function resetSpeechLineReveal(options = {}) {
+  window.clearTimeout(speechLineTimer);
+  speechLineTimer = null;
+  speechRevealTargetWords = [];
+  speechRevealShownWords = [];
+  speechRevealIsFinal = false;
+  pendingSpeechLineFinal = "";
+  if (options.clearText && els.speechLine) els.speechLine.textContent = "";
+}
+
+function scheduleNextSpeechWord() {
+  if (speechLineTimer || speechRevealShownWords.length >= speechRevealTargetWords.length) return;
+  const previousWord = speechRevealShownWords.at(-1) || "";
+  const delay = speechRevealShownWords.length ? speechWordDelay(previousWord) : SPEECH_FIRST_WORD_DELAY_MS;
+  speechLineTimer = window.setTimeout(() => {
+    speechLineTimer = null;
+    revealNextSpeechWord();
+  }, delay);
+}
+
+function revealNextSpeechWord() {
+  if (speechRevealShownWords.length >= speechRevealTargetWords.length) return;
+  speechRevealShownWords.push(speechRevealTargetWords[speechRevealShownWords.length]);
+  updateSpeechLine(speechRevealShownWords.join(" "));
+  scheduleNextSpeechWord();
+}
+
+function speechWordsFromText(text, includeTrailingWord = false) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+  const words = clean.split(" ").filter(Boolean);
+  const hasCompleteTrailingWord = /[\s.!?;:,)"'\]]$/.test(String(text || ""));
+  if (!includeTrailingWord && !hasCompleteTrailingWord && words.length > 1) {
+    return words.slice(0, -1);
+  }
+  return words;
+}
+
+function speechWordDelay(word) {
+  if (/[.!?]$/.test(word)) return SPEECH_FULL_PAUSE_MS;
+  if (/[,;:]$/.test(word)) return SPEECH_SOFT_PAUSE_MS;
+  return SPEECH_WORD_INTERVAL_MS;
+}
+
+function isWordPrefix(prefix, words) {
+  if (prefix.length > words.length) return false;
+  return prefix.every((word, index) => word === words[index]);
 }
 
 function visibleSpeechPhrase(text) {
@@ -1829,8 +2170,10 @@ function audit(text) {
 function toggleTranscriptActivity() {
   const enabled = !transcriptActivityVisible;
   transcriptActivityVisible = enabled;
-  els.toggleTranscriptActivity.textContent = enabled ? "Hide Logs" : "Show Logs";
-  els.toggleTranscriptActivity.setAttribute("aria-pressed", String(enabled));
+  if (els.toggleTranscriptActivity) {
+    els.toggleTranscriptActivity.textContent = enabled ? "Hide Logs" : "Show Logs";
+    els.toggleTranscriptActivity.setAttribute("aria-pressed", String(enabled));
+  }
   els.transcript.querySelectorAll(".activity-message").forEach((node) => node.remove());
   if (enabled) {
     auditEntries.slice(0, 40).reverse().forEach(addActivityMessage);

@@ -49,7 +49,16 @@ Pika-Experiments/
 
 | Folder | Status | Stack | Maintainer notes |
 |---|---|---|---|
-| `voice-stage-pika/` | ✅ ready for first push | Node 18+, browser, OpenAI Realtime, Pika MCP, optional Google OAuth | Built by the Pika team. Apache-2.0 like the other Pika-Labs repos. Scrubbed for public release. |
+| `voice-stage-pika/` | ✅ live on `main` | Node 18+, browser, OpenAI Realtime, Pika MCP, optional Google OAuth | Built by the Pika team. Apache-2.0 like the other Pika-Labs repos. Synced from upstream `rus-jpg/voice-stage-pika`; see "Sync log" below for last fetch. |
+
+## Sync log — `voice-stage-pika/`
+
+| Date | Upstream commit | Public commit | Summary |
+|---|---|---|---|
+| 2026-05-25 | `02b6a63` *Polish voice stage experience* | initial | First public push. README, SECURITY, LICENSE, AGENTS.md, scrubbed env files. |
+| 2026-05-26 | `19950bb` *Refine stage layout system* | this commit | Stage history (back/forward + animated media transitions), reduced-motion support, theme guidance added to `STAGE_LAYOUT_PROMPT`, minor menu cleanup. UX-only — no new env vars, no new endpoints, no new files, no new deps. |
+
+When pulling future upstream commits: diff against the last `upstream commit` row, sanity-check for new env vars / endpoints / dependencies / secrets, update the public README if anything is user-facing, append a new row here, push.
 
 ## Conventions
 
