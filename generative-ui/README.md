@@ -1,8 +1,8 @@
-<h1 align="center">Voice Stage</h1>
+<h1 align="center">Generative UI</h1>
 
 <p align="center">
-  <b>Talk to an agent. Watch it think on stage.</b><br/>
-  A local voice-controlled presentation canvas — OpenAI Realtime in your ears, Pika MCP as the agent's hands, optional Google Workspace as its desk.
+  <b>A new way to interact with your AI agent using voice and generative UI.</b><br/>
+  Talk to an agent and watch it present its thinking, visually, in real time. Powered by OpenAI Realtime for human-like conversation and the Pika MCP for live visual orchestration, the agent listens, analyzes what's being discussed, and dynamically generates the most appropriate visual composition for each response. Optional Google Workspace integration.
 </p>
 
 <p align="center">
@@ -12,11 +12,7 @@
   <a href="../README.md"><img src="https://img.shields.io/badge/part_of-Pika--Experiments-violet" alt="Pika-Experiments"></a>
 </p>
 
-<p align="center">
-  <img src="../.github/assets/voice-stage-hero.jpg" alt="Voice Stage — a microphone with a soft voice-waveform glow streaming toward a horizontal presentation canvas showing a moodboard, headline card, dashboard, and profile card" width="100%"/>
-</p>
-
-> 🧪 Part of [`Pika-Experiments`](../README.md). Local-only prototype. ~3,700 lines of plain JS, **zero dependencies**, no build step. Read the source.
+> 🧪 Part of [`Pika-Experiments`](../README.md). Local-only prototype. ~3,700 lines of plain JS, **zero dependencies**, no build step. Read the source →
 
 ---
 
@@ -25,11 +21,11 @@
 You hold the mic and talk. The agent talks back — and **shows you what it's thinking** on a live canvas.
 
 - 🎙️ **OpenAI Realtime** runs the voice loop (low-latency WebRTC, speech in & out).
-- 🎨 **The Stage** is a generative presentation canvas — moodboards, slides, dashboards, recap cards — emitted by the model as you converse. Stage history is navigable (← / → in the top-left) and media animates between layouts.
+- 🎨 **The generative canvas** — moodboards, slides, dashboards, recap cards, calendars, comparisons — emitted by the model as you converse. Layout history is navigable (← / → in the top-left) and media animates between layouts.
 - 🧰 **Pika MCP** gives the agent ~60 atomic creative tools: generate images and videos, search music, lipsync, capture websites, edit audio, build brand kits.
 - 📅 **Optional Google Workspace** — read calendar, draft emails, create Docs/Sheets/Slides if you connect a Google OAuth client.
 
-Try saying: *"Make a three-image moodboard for a forest-cabin product line and put it on stage."*
+Try saying: *"Make a three-image moodboard for a forest-cabin product line and put it on the canvas."*
 
 ## Prerequisites
 
@@ -37,7 +33,7 @@ Try saying: *"Make a three-image moodboard for a forest-cabin product line and p
 |---|---|
 | **Node 18+** | Runs the server. No `npm install` — there are no deps. |
 | **OpenAI API key** with Realtime access | Powers the voice loop. Pay-as-you-go. Get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys). |
-| **A Pika account** | OAuths into `mcp.pika.me` on first **Connect Pika** click. Sign up at [pika.me](https://www.pika.me/). |
+| **A Pika account** | OAuths into `mcp.pika.me` on first **Connect Pika** click. Sign up at [pika.me](https://www.pika.me/). Pika MCP is required — the experiment uses it as the agent's live tool layer. |
 | **Chromium-based browser** | WebRTC + `getUserMedia`. Chrome, Edge, Brave, Arc all work. |
 | *Google OAuth client (optional)* | Only if you want Gmail / Calendar / Drive / Docs. [Create one here.](https://console.cloud.google.com/apis/credentials) |
 
@@ -45,7 +41,7 @@ Try saying: *"Make a three-image moodboard for a forest-cabin product line and p
 
 ```bash
 git clone https://github.com/Pika-Labs/Pika-Experiments.git
-cd Pika-Experiments/voice-stage-pika
+cd Pika-Experiments/generative-ui
 
 bash scripts/set-openai-key.sh   # prompts for your OpenAI key (hidden), writes .env (chmod 600, git-ignored)
 npm start                         # boots node server.js on :3000
@@ -80,13 +76,13 @@ See [`.env.example`](./.env.example) for the full template.
 ```
 Browser ──WebRTC──► OpenAI Realtime ──tool calls──► Node server ──MCP──► mcp.pika.me
    ▲                       │                              │                  + Google APIs
-   │  Stage layout JSON ◄──┘                              │
+   │  layout JSON       ◄──┘                              │
    └───────────── server-sent updates ────────────────────┘
 ```
 
-- **`server.js`** — Node HTTP server. Mints ephemeral Realtime client secrets, brokers MCP (initialize / list-tools / call-tool), runs OAuth dances for Pika + Google, serves the static frontend. The Stage's layout rules live in the `STAGE_LAYOUT_PROMPT` constant at the top.
-- **`public/app.js`** — Browser client. Opens the WebRTC peer connection, streams the mic, renders incoming Stage layouts, runs the transcript + chat composer.
-- **`public/index.html` + `styles.css`** — The Stage canvas + side panel. Stage is transparent so the agent has room to compose.
+- **`server.js`** — Node HTTP server. Mints ephemeral Realtime client secrets, brokers MCP (initialize / list-tools / call-tool), runs OAuth dances for Pika + Google, serves the static frontend. Layout rules live in the `STAGE_LAYOUT_PROMPT` constant at the top — including the "pick an internal art-direction theme before composing" guidance the model uses to choose between dashboard, moodboard, recipe card, brand book, etc.
+- **`public/app.js`** — Browser client. Opens the WebRTC peer connection, streams the mic, renders incoming layouts, animates media between layouts (`prefers-reduced-motion` honored), runs the back/forward layout history, transcript + chat composer.
+- **`public/index.html` + `styles.css`** — The canvas + side panel. The canvas is transparent so the agent has room to compose.
 
 ## Troubleshooting
 
@@ -97,7 +93,7 @@ Browser ──WebRTC──► OpenAI Realtime ──tool calls──► Node ser
 | Pika tools fail with 401 | Token expired / not connected | `...` menu → **Connect Pika** again. Delete `.pika-token.json` if it loops. |
 | No Google button | OAuth creds missing | Add `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`; restart; hard-refresh. |
 | Realtime ends instantly | OpenAI org lacks Realtime access | Confirm `gpt-realtime-2` (or your pinned model) is enabled for the org. |
-| Stage stays blank | Model didn't emit a layout this turn | Ask explicitly: *"Show that on the Stage as a moodboard."* |
+| Canvas stays blank | Model didn't emit a layout this turn | Ask explicitly: *"Show that on the canvas as a moodboard."* |
 
 ## Security
 
