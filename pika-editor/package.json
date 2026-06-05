@@ -1,0 +1,26 @@
+{
+  "name": "pika-agent-editor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm --workspace server run dev",
+    "dev:client": "npm --workspace client run dev",
+    "dev": "concurrently -k -n SERVER,CLIENT -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server:alt": "PIKA_EDITOR_PORT=3082 npm --workspace server run dev",
+    "dev:client:alt": "PIKA_EDITOR_SERVER_URL=http://127.0.0.1:3082 npm --workspace client run dev -- --port 3083",
+    "dev:alt": "concurrently -k -n SERVER2,CLIENT2 -c cyan,yellow \"npm:dev:server:alt\" \"npm:dev:client:alt\"",
+    "dev:demo1": "concurrently -k -n S1,C1 -c blue,magenta \"PIKA_DEMO_MODE=1 PIKA_EDITOR_PORT=3090 PIKA_EDITOR_PROJECT=$PWD/projects/Project-001 npm --workspace server run dev\" \"PIKA_EDITOR_SERVER_URL=http://127.0.0.1:3090 npm --workspace client run dev -- --port 3091\"",
+    "dev:demo2": "concurrently -k -n S2,C2 -c cyan,yellow \"PIKA_DEMO_MODE=1 PIKA_EDITOR_PORT=3092 PIKA_EDITOR_PROJECT=$PWD/projects/Project-002 npm --workspace server run dev\" \"PIKA_EDITOR_SERVER_URL=http://127.0.0.1:3092 npm --workspace client run dev -- --port 3093\"",
+    "dev:demo3": "concurrently -k -n S3,C3 -c green,red \"PIKA_DEMO_MODE=1 PIKA_EDITOR_PORT=3094 PIKA_EDITOR_PROJECT=$PWD/projects/Project-003 npm --workspace server run dev\" \"PIKA_EDITOR_SERVER_URL=http://127.0.0.1:3094 npm --workspace client run dev -- --port 3095\"",
+    "dev:demo4": "concurrently -k -n S4,C4 -c gray,white \"PIKA_DEMO_MODE=1 PIKA_EDITOR_PORT=3096 PIKA_EDITOR_PROJECT=$PWD/projects/Project-004 npm --workspace server run dev\" \"PIKA_EDITOR_SERVER_URL=http://127.0.0.1:3096 npm --workspace client run dev -- --port 3097\"",
+    "dev:demos": "concurrently -k -n D1,D2,D3,D4 -c blue,cyan,green,gray \"npm:dev:demo1\" \"npm:dev:demo2\" \"npm:dev:demo3\" \"npm:dev:demo4\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

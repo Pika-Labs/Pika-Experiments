@@ -1,0 +1,18 @@
+<!--
+  Cream-white-filled cursor with a thin black stroke for contrast on
+  light backgrounds. Shape borrowed from Phosphor `cursor-fill`. The
+  visual "hot point" (the sharp tip the cursor is meant to point with)
+  sits at approximately (40, 40) in this 256-unit viewBox — i.e. 15.6%
+  inset from the top-left corner. When placing the cursor at a target,
+  offset the rendered img by (hotX, hotY) = (width * 0.156, height * 0.156)
+  so the tip lands on the target instead of the image's center.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <path
+    d="m220.49 207.8l-12.69 12.69a12 12 0 0 1-17 0l-56.57-56.57L115 214.08l-.13.33a15.84 15.84 0 0 1-14.61 9.59h-.78a15.82 15.82 0 0 1-14.41-11L32.8 52.92A15.95 15.95 0 0 1 52.92 32.8L213 85.07a16 16 0 0 1 1.41 29.8l-.33.13l-50.16 19.27l56.57 56.56a12 12 0 0 1 0 16.97"
+    fill="#fcfaf7"
+    stroke="#0d0d0d"
+    stroke-width="14"
+    stroke-linejoin="round"
+  />
+</svg>
