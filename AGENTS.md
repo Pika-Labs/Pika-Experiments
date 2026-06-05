@@ -50,7 +50,6 @@ Pika-Experiments/
 | Folder | Public name | Status | Stack | Maintainer notes |
 |---|---|---|---|---|
 | `generative-ui/` | **Generative UI** | ✅ live on `main` | Node 18+, browser, OpenAI Realtime, Pika MCP, optional Google OAuth | Built by the Pika team. Apache-2.0 like the other Pika-Labs repos. Upstream is `rus-jpg/voice-stage-pika`. See "Sync log" below. |
-| `pika-editor/` | **PikaAgentEditor** | ✅ live on `main` | Node, React + Vite, Fastify, Anthropic Claude, Pika MCP | Built by the Pika team. Apache-2.0. Synced from the private upstream `Mellis-Labs/Pika-Editor` (`main`). Persona/identity neutralized for public ("Pika Agent"); no per-folder secrets. |
 
 ## Sync log — `generative-ui/`
 

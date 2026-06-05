@@ -23,7 +23,6 @@
 | Experiment | What it does | Stack |
 |---|---|---|
 | [`generative-ui/`](./generative-ui) | **Generative UI** — talk to an agent and watch it present its thinking, visually, in real time. Powered by OpenAI Realtime + Pika MCP. | Node 18+, browser, OpenAI Realtime, Pika MCP |
-| [`pika-editor/`](./pika-editor) | **PikaAgentEditor** — an agent-first video editor. Cut, caption, and render on a real timeline while an in-app Claude agent generates assets through the Pika MCP and writes them straight back into the edit. | Node, React + Vite, Fastify, Anthropic Claude, Pika MCP |
 
 More experiments land as sibling folders. Each is **self-contained** — own README, own deps, own runtime. Clone the whole repo, run only what you want.
 
