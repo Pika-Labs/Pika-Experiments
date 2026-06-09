@@ -32,7 +32,7 @@ Some experiments outgrow the monorepo and live in their own repos:
 
 | Project | What it does | Repo |
 |---|---|---|
-| **PikaAgentEditor** | An agent-first video editor — cut, caption, and render on a real timeline while an in-app Claude agent generates assets through the Pika MCP and writes them straight back into the edit. | [`Pika-Labs/Pika-Editor`](https://github.com/Pika-Labs/Pika-Editor) |
+| **Pika Director Suite** | An agent-first video editor — cut, caption, and render on a real timeline while an in-app Claude agent generates assets through the Pika MCP and writes them straight back into the edit. | [`Pika-Labs/Pika-Director-Suite`](https://github.com/Pika-Labs/Pika-Director-Suite) |
 
 ## Quickstart
 
