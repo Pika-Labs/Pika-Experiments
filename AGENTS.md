@@ -9,7 +9,6 @@ Shared instructions for any AI coding agent (Claude Code, OpenAI Codex CLI, Curs
 Sibling repos in the org:
 - [`Pika-Labs/Pika-Plugins`](https://github.com/Pika-Labs/Pika-Plugins) — supported, versioned Claude Code / Codex / Cursor plugin (skills + MCP wiring).
 - [`Pika-Labs/Pika-Skills`](https://github.com/Pika-Labs/Pika-Skills) — supported, versioned skills powered by the Pika Developer API.
-- [`Pika-Labs/Pika-Director-Suite`](https://github.com/Pika-Labs/Pika-Director-Suite) — Pika Director Suite, a standalone agent-first video editor on the Pika MCP. Apache-2.0; its own repo (linked from the root README's "Standalone projects" section), not a folder here.
 
 This repo (`Pika-Experiments`) sits **below** those in terms of polish. Things here are intentionally rough. Don't push code here that would belong in the supported repos — promote it instead.
 
